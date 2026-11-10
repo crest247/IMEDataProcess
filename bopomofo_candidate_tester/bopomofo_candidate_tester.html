@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>注音選字測試</title>
+<style>
+:root {
+  --bg: #f6f5f2; --panel: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #e3e1dc;
+  --accent: #2f5bd3; --accent-soft: #e8eefc; --tone: #b4532a; --tone-soft: #fbeee7;
+  --key: #fbfaf8; --key-hover: #efede8; --good: #2e7d4f; --warn: #a15c00; --bad: #b3261e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161615; --panel: #201f1e; --ink: #ecebe8; --muted: #a09e99; --line: #34322f;
+    --accent: #8aa9ff; --accent-soft: #263255; --tone: #f0a07a; --tone-soft: #3d2a21;
+    --key: #2a2927; --key-hover: #353330; --good: #6fcf97; --warn: #f2b45c; --bad: #ff8a80;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.5 "Noto Sans TC", "Noto Sans CJK TC", "PingFang TC", "Microsoft JhengHei", "HanaMinB", "BabelStone Han", system-ui, sans-serif; }
+.wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
+header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+h1 { font-size: 20px; margin: 0; }
+select, input[type=text] { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--panel); color: var(--ink); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+.label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+#output { min-height: 2.2em; font-size: 20px; white-space: pre-wrap; word-break: break-all; }
+#compose { font-size: 26px; min-height: 1.6em; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px; }
+.chip { border-bottom: 2px solid var(--accent); padding: 0 1px; }
+.chip small { font-size: 11px; color: var(--muted); display: block; line-height: 1; text-align: center; }
+#remain { color: var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 0 6px; }
+#remain:empty { display: none; }
+.caret { width: 2px; height: 1.1em; background: var(--ink); animation: blink 1s steps(1) infinite; align-self: center; }
+@keyframes blink { 50% { opacity: 0; } }
+.meta { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; }
+.badge { font-size: 12px; padding: 1px 8px; border-radius: 99px; border: 1px solid currentColor; }
+.b-mix { color: var(--accent); } .b-single { color: var(--good); } .b-bad { color: var(--bad); }
+.cands { display: flex; flex-wrap: wrap; gap: 6px; max-height: 260px; overflow-y: auto; }
+.cand { border: 1px solid var(--line); background: var(--key); border-radius: 8px; padding: 4px 10px; cursor: pointer;
+  font: inherit; color: var(--ink); text-align: left; }
+.cand:hover { background: var(--key-hover); border-color: var(--accent); }
+.cand .t { font-size: 18px; }
+.cand .z { font-size: 11px; color: var(--muted); display: block; line-height: 1.2; }
+.cand.sent { border-color: var(--accent); background: var(--accent-soft); }
+.cand.sent .t { font-size: 20px; }
+.empty { color: var(--muted); font-size: 14px; }
+.kb { display: grid; gap: 6px; user-select: none; }
+.row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; }
+.row.r2 { padding-left: 2.2%; } .row.r3 { padding-left: 4.4%; } .row.r4 { padding-left: 6.6%; }
+.key { font: inherit; font-size: 22px; padding: 10px 0; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--key); color: var(--ink); cursor: pointer; }
+.key:hover { background: var(--key-hover); }
+.key:active { transform: translateY(1px); }
+.key.tone { color: var(--tone); background: var(--tone-soft); font-weight: 700; }
+.key.tone { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; padding: 4px 0; }
+.key.tone .tm { font-size: 30px; line-height: 0.9; }
+.key.tone small { font-size: 11px; font-weight: 500; margin-top: 2px; }
+.fn { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.fn .key { font-size: 15px; padding: 10px 16px; flex: 1 1 auto; }
+.fn .key.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.paste { display: flex; gap: 6px; margin-top: 8px; }
+.paste input { flex: 1; min-width: 0; }
+@media (max-width: 560px) { .key { font-size: 17px; padding: 8px 0; } .row { gap: 4px; } .kb { gap: 4px; } }
+.cand.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+#status { font-size: 13px; color: var(--muted); }
+#status.bad { color: var(--bad); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>注音選字測試</h1>
+    <span id="status"></span>
+  </header>
+
+  <div class="panel">
+    <div class="label">已送出的文字</div>
+    <div id="output"></div>
+  </div>
+
+  <div class="panel">
+    <div class="label">組字中（底線＝已選的 unit，藍底＝尚未選的注音）</div>
+    <div id="compose"><span id="chips"></span><span id="remain"></span><span class="caret"></span></div>
+    <div class="meta" id="meta"></div>
+  </div>
+
+  <div class="panel">
+    <div class="label" id="candLabel">候選</div>
+    <div class="cands" id="cands"></div>
+  </div>
+
+  <div class="panel">
+    <div class="kb" id="keyboard"></div>
+    <div class="fn">
+      <button class="key" id="backspace">⌫ 刪除</button>
+      <button class="key" id="space">空白</button>
+      <button class="key" id="enter">Enter</button>
+      <button class="key" id="clearComposition">清除組字</button>
+      <button class="key" id="clearOutput">清除已送出</button>
+    </div>
+    <div class="paste">
+      <input type="text" id="pasteBox" placeholder="或貼上注音字串，例如 ㄏㄍㄒㄖㄕˋㄋˇ">
+      <button class="key" id="pasteButton" style="font-size:15px;padding:6px 14px">套用</button>
+    </div>
+  </div>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

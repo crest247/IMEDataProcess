@@ -1,0 +1,6 @@
+source_data/lines.jsonl
+training_output/
+__pycache__/
+.claude/
+bopomofo-implementation.md
+rules.txt
