@@ -185,6 +185,7 @@ async function start() {
     await decoder.loadData(DATA_URL);
     status.textContent = `資料已載入（${(performance.now() - startTime).toFixed(0)} ms）`;
     bindHardwareKeys();
+    processor.updateCandidates();
   } catch (error) {
     status.textContent = `載入資料失敗：${error}`;
     status.classList.add("bad");
